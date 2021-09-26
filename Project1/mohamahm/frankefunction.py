@@ -9,6 +9,7 @@ class Franke:
         self.mu     = mean
         self.sigma  = deviation
         self.seed   = seed
+        self.noise  = False
         
         if seed != None:
             np.random.seed(seed)
@@ -22,8 +23,8 @@ class Franke:
             y_array = np.arange(0, 1, 0.05)
         else:
             # This might be useless
-            x_array = np.random.rand(20)
-            y_array = np.random.rand(20)
+            x_array = np.sort(np.random.rand(50))
+            y_array = np.sort(np.random.rand(50))
         return x_array, y_array
         
     def franke(self, x, y, noise = False):
@@ -46,7 +47,7 @@ class Franke:
         from matplotlib.ticker import LinearLocator, FormatStrFormatter
         import matplotlib.pyplot as plt
         
-        plt.close()
+        # plt.close()
         fig  = plt.figure()
         ax   = fig.gca(projection= '3d')
         
@@ -68,6 +69,7 @@ class Franke:
         ax.set_xlabel('X')
         ax.set_ylabel('Y')
         ax.set_zlabel('Z')
+        # plt.draw()
         
         plt.show()
         
@@ -77,7 +79,7 @@ class Franke:
         from matplotlib.ticker import LinearLocator, FormatStrFormatter
         import matplotlib.pyplot as plt
         
-        plt.close()
+        # plt.close()
         fig  = plt.figure()
         ax   = fig.gca(projection= '3d')
         
@@ -100,5 +102,7 @@ class Franke:
         ax.set_xlabel('X')
         ax.set_ylabel('Y')
         ax.set_zlabel('Z')
+        # plt.draw()
+        # fig.savefig(f"plot_franke_{hex(id(Franke))}", dpi=300, bbox_inches='tight')
         
         plt.show()

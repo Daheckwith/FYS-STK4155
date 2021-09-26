@@ -1,31 +1,34 @@
 import numpy as np
+from sklearn.model_selection import train_test_split
 
-#Scikitlearn
-# from sklearn.neighbors import KNeighborsClassifier
-# from sklearn.preprocessing import PolynomialFeatures
-# from sklearn.preprocessing import StandardScaler
-# from sklearn import metrics
-# from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
-# from sklearn.model_selection import train_test_split
-
-class Regression:
-    def __init__(self, x, y, deg):
-        """
+class Scaler_Splitter:
+    def __init__(self, x, y, Z, deg= 3, test_size= 0.2, method = None):
+        # super(Scaler_Splitter, self).__init__()
+        print("Class Scaler_Splitter initializer")
+        self.x = x; self.y = y; self.Z = Z; self.method = method; self.deg = deg
         
-        reg.Regression(x,y) activates __init__
-        but not when __new__ is added   
+        if self.method == "Manual":
+            print("Class Scaler_Splitter Manual")
+            self.X = self.create_design_matrix(x, y, deg)
+        else:
+            print("Class Scaler_Splitter Scikit")
+            self.X = self.scikit_design_matrix(x, y, deg)
+            
         
-        """
-        self.x = x
-        self.y = y
+        X_train, X_test, Z_train, Z_test = train_test_split(self.X, self.Z, test_size= test_size)
         
-        # self.X = create_design_matrix(x, y, deg)
-        # self.X_T = self.X.T
-        # print("__init__ Regression initialized")
-        # print("__init__ x: ", self.x, "y: ", self.y, "X: ", self.X)
+        if self.method == "Manual":
+            print("Class Scaler_Splitter Manual")
+            self.X_train_scaled = self.numpy_scaler(X_train)
+            self.X_test_scaled = self.numpy_scaler(X_test)
+        else:
+            print("Class Scaler_Splitter Scikit")
+            self.X_train_scaled = self.scikit_scaler(X_train)
+            self.X_test_scaled = self.scikit_scaler(X_test)
         
+        self.Z_train = Z_train; self.Z_test = Z_test
         
-    def create_design_matrix(x, y, deg):
+    def create_design_matrix(self, x, y, deg):
         """
         Creates a design matrix with columns:
         [1  x  y  x^2  y^2  xy  x^3  y^3  x^2y ...]
@@ -45,7 +48,7 @@ class Regression:
         
         return X
     
-    def scikit_design_matrix(x, y, deg):
+    def scikit_design_matrix(self, x, y, deg):
         """
         Creates a design matrix with columns, using scikit:
         [1  x  y  x^2  y^2  xy  x^3  y^3  x^2y ...]
@@ -59,9 +62,8 @@ class Regression:
         X = poly.fit_transform(X)
         
         return X
-        
-                
-    def numpy_scaler(X):
+    
+    def numpy_scaler(self, X):
         """
         Scaling a polynolmial matrix using NumPy
         
@@ -88,7 +90,7 @@ class Regression:
         
         return X
         
-    def scikit_scaler(X):
+    def scikit_scaler(self, X):
         """
         Scaling a polynolmial matrix using StandardScaler from Scikit-learn
         
@@ -118,80 +120,119 @@ class Regression:
         X = np.insert( X_scaled, 0, X[:,0], axis= 1 ) #Reconstructing X after ommiting the intercept
         
         return X
-        
-            
-    # def __new__(self, x, y):
-        """
-        
-        reg.OLS(x,y) activates __new__
-
-        """
-        # self.x = x
-        # self.y = y
-        # self.X = create_design_matrix(self)
-        # print("__new__ Regression initialized")
-        # print("__new__ x: ", self.x, "y: ", self.y, "X: ", self.X)
     
-
-class Manual_OLS(Regression):
-    def __init__(self, x, y, deg = 3):
-        Regression.__init__(self, x, y, deg)
-        self.beta = None;
-        self.X = Regression.create_design_matrix(x, y, deg)
-    
-    def find_beta(self, X, z):
+class Manual_OLS(Scaler_Splitter):
+    def __init__(self, scaler_obj):
+        print("Class Manual_OLS initializer")
+        self.beta = None
+        self.scaler = scaler_obj
+        
+        
+    def fit(self, X, Z):
         X_T = X.T
-        return np.linalg.pinv(X_T @ X) @ X_T @ z
+        return np.linalg.pinv(X_T @ X) @ (X_T @ Z)
+        # return np.dot(np.linalg.pinv(np.dot(X_T,X)),np.dot(X_T,Z))
         
-    def OLS_Regression(self, z, test_size):
+    
+    def OLS_Regression(self):
+        print("Manual regression train-test split")
         import error as err
-        from sklearn.model_selection import train_test_split
+        from sklearn.metrics import mean_squared_error, r2_score,\
+            mean_squared_log_error, mean_absolute_error
         
-        X = Regression.numpy_scaler(self.X)
-        # X2 = Regression.scikit_scaler(self.X)
-            
+        X_train_scaled = self.scaler.X_train_scaled; Z_train = self.scaler.Z_train
+        X_test_scaled  = self.scaler.X_test_scaled; Z_test = self.scaler.Z_test
+        self.beta = self.fit( X_train_scaled, Z_train)
+        Z_tilde   = X_train_scaled @ self.beta
+        Z_pred    = X_test_scaled @ self.beta
         
-        X_train, X_test, z_train, z_test = train_test_split(X, z, test_size= test_size)
-        self.beta = self.find_beta(X_train, z_train)
-        z_tilde = X_train @ self.beta
-        z_pred = X_test @ self.beta
-        
-        # print("beta: ", self.beta.shape, " X_train: ", X_train.shape, " z_tilde: ", z_tilde.shape, " size: ", np.size(z_tilde))
-        # print("z_tilde size:", z_tilde.size)
+        # print("self.beta: ", self.beta.shape)
         
         # Error analysis
-        Err_tilde = err.Error(z_tilde)
+        Err_tilde = err.Error(Z_tilde)
         
-        MSE_tilde = Err_tilde.MSE(z_train, z_tilde)
-        MAE_tilde = Err_tilde.MAE(z_train, z_tilde)
-        R2_tilde  = Err_tilde.R2_Score(z_train, z_tilde)
+        MSE_tilde = Err_tilde.MSE(Z_train, Z_tilde)
+        MAE_tilde = Err_tilde.MAE(Z_train, Z_tilde)
+        R2_tilde  = Err_tilde.R2_Score(Z_train, Z_tilde)
         
         print("-----------Tilde-----------")
         print("R2 Score:", R2_tilde, "MSE:", MSE_tilde, "MSA:", MAE_tilde)
         print("---------------------------\n")
         
-        Err_pred  = err.Error(z_pred)
+        # MSE_tilde_sci = mean_squared_error(Z_train, Z_tilde)
+        # MAE_tilde_sci = mean_absolute_error(Z_train, Z_tilde)
+        # R2_tilde_sci  = r2_score(Z_train, Z_tilde)
         
-        MSE_pred = Err_pred.MSE(z_test, z_pred)
-        MAE_pred = Err_pred.MAE(z_test, z_pred)
-        R2_pred  = Err_pred.R2_Score(z_test, z_pred)
+        # print("-----------Sci-Tilde-----------")
+        # print("R2 Score:", R2_tilde_sci, "MSE:", MSE_tilde_sci, "MSA:", MAE_tilde_sci)
+        # print("---------------------------\n")
+        
+        Err_pred  = err.Error(Z_pred)
+        
+        MSE_pred = Err_pred.MSE(Z_test, Z_pred)
+        MAE_pred = Err_pred.MAE(Z_test, Z_pred)
+        R2_pred  = Err_pred.R2_Score(Z_test, Z_pred)
         
         print("-----------Predict----------")
         print("R2 Score:", R2_pred, "MSE:", MSE_pred, "MSA:", MAE_pred)
         print("---------------------------\n")
         
-        #Plotting
-        import frankefunction as fr
-        # Fr = fr.Franke()
-        # Fr.plot_franke()
         
-class Scikit_OLS(Regression):
-    def __init__(self, x, y, deg = 3):
-        Regression.__init__(self, x, y, deg)
-        self.beta = None;
-        self.X = Regression.scikit_design_matrix(x, y, deg)
+        # MSE_pred_sci = mean_squared_error(Z_test, Z_pred)
+        # MAE_pred_sci = mean_absolute_error(Z_test, Z_pred)
+        # R2_pred_sci  = r2_score(Z_test, Z_pred)
         
-    def find_beta(self, X, z):
-        print("I'm here")
+        # print("-----------Sci-Predict-----------")
+        # print("R2 Score:", R2_pred_sci, "MSE:", MSE_pred_sci, "MSA:", MAE_pred_sci)
+        # print("---------------------------\n")
+        
+class Scikit_OLS(Scaler_Splitter):
+    def __init__(self, scaler_obj):
+        print("Class Scikit_OLS initializer")
+        self.beta = None
+        self.scaler = scaler_obj
+        
+    def fit(self, X, Z):
+        from sklearn.linear_model import LinearRegression 
+        linreg = LinearRegression()
+        return linreg.fit(X, Z)
         
     
+    def OLS_Regression(self):
+        print("Scikit regression train-test split")
+        from sklearn.metrics import mean_squared_error, r2_score,\
+            mean_squared_log_error, mean_absolute_error
+        
+        X_train_scaled = self.scaler.X_train_scaled; Z_train = self.scaler.Z_train
+        X_test_scaled  = self.scaler.X_test_scaled; Z_test = self.scaler.Z_test
+        
+        
+        linreg = self.fit(X_train_scaled, Z_train)
+        
+        # print('The intercept alpha: \n', linreg.intercept_.shape)
+        # print('Coefficient beta : \n', linreg.coef_.shape)
+        
+        Z_tilde = linreg.predict(X_train_scaled)
+        Z_pred  = linreg.predict(X_test_scaled)
+        
+        # print(Z_regfit[0:4, :], "\n...", Z_tilde[0:4, :])
+        
+        # Error analysis
+        
+        MSE_tilde = mean_squared_error(Z_train, Z_tilde)
+        MAE_tilde = mean_absolute_error(Z_train, Z_tilde)
+        R2_tilde = r2_score(Z_train, Z_tilde)
+        
+        print("-----------Tilde-----------")
+        print("R2 Score:", R2_tilde, "MSE:", MSE_tilde, "MSA:", MAE_tilde)
+        print("---------------------------\n")
+        
+        MSE_pred = mean_squared_error(Z_test, Z_pred)
+        MAE_pred = mean_absolute_error(Z_test, Z_pred)
+        R2_pred  = r2_score(Z_test, Z_pred)
+        
+        print("-----------Predict----------")
+        print("R2 Score:", R2_pred, "MSE:", MSE_pred, "MSA:", MAE_pred)
+        print("---------------------------\n")
+        
+        
