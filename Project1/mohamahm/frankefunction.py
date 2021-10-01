@@ -2,10 +2,10 @@ import numpy  as np
 
 class Franke:
     def __init__(self, mean: float = 0.0, deviation: float = 0.0, seed: int = None) -> None:
-        
         """
         The Franke function class
         """
+        
         self.mu     = mean
         self.sigma  = deviation
         self.seed   = seed
@@ -17,17 +17,20 @@ class Franke:
             # rng = np.random.RandomState(2021)
         # print("Franke is initialized")
         
-    def initialize_array(self, random = False):
+    def initialize_array(self, random = False, precision = 0.05):
+        steplength = precision
+        steps = int(1/steplength)
         if random == False:
-            x_array = np.arange(0, 1, 0.05)
-            y_array = np.arange(0, 1, 0.05)
+            print("False", "steps: ", steps, "steplength: ", steplength)
+            x_array = np.arange(0, 1, steplength)
+            y_array = np.arange(0, 1, steplength)
         else:
-            # This might be useless
-            x_array = np.sort(np.random.rand(50))
-            y_array = np.sort(np.random.rand(50))
+            print("True", "steps: ", steps, "steplength: ", steplength)
+            x_array = np.sort(np.random.rand(steps))
+            y_array = np.sort(np.random.rand(steps))
         return x_array, y_array
         
-    def franke(self, x, y, noise = False):
+    def franke_function(self, x, y, noise = False):
         n= len(x)
         self.noise = noise
         
@@ -37,7 +40,8 @@ class Franke:
         term4 = -0.2*np.exp(-(9*x-4)**2 - (9*y-7)**2)
         
         if noise:
-            return term1 + term2 + term3 + term4 + 1*np.random.normal(self.mu, self.sigma, n)
+            normal_dist = np.random.normal(self.mu, self.sigma, n)
+            return term1 + term2 + term3 + term4 + 0.1*normal_dist, np.var(normal_dist)
         else:
             return term1 + term2 + term3 + term4
         
