@@ -32,14 +32,16 @@ class Numpy_split_scale:
         Creates a design matrix with columns:
         [1  x  y  x^2  y^2  xy  x^3  y^3  x^2y ...]
         """
+        print("Numpy_split_scale create_design_matrix")
         if len(x.shape) > 1:
             x = np.ravel(x)
             y = np.ravel(y)
+            
 
         N = len(x)
         p = int((deg + 1)*(deg + 2)/2)
         X = np.ones((N,p))
-
+        
         for i in range(1, deg + 1):
             q = int((i)*(i+1)/2)
             for k in range(i+1):
@@ -105,6 +107,10 @@ class Scikit_split_scale:
         [1  x  y  x^2  y^2  xy  x^3  y^3  x^2y ...]
         """
         from sklearn.preprocessing import PolynomialFeatures
+        
+        if len(x.shape) > 1:
+            x = np.ravel(x)
+            y = np.ravel(y)
         
         # X = np.vstack((x,y)).T
         X = np.stack((x,y), axis = 1)

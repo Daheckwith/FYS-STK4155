@@ -62,7 +62,7 @@ def Exercise1(x, y, z_noisey, var):
 def Exercise2(x, y, z_noisey):
     #Bias-Variance Trade-off
     print("\n \nModel Complexity")
-
+    z_flat = np.ravel(z_noisey)
     maxdegree = 11; start = 1; degrees = np.arange(start, maxdegree)
     MSE_train = np.zeros(maxdegree - start); MSE_test = np.zeros(maxdegree - start)
     Error_list = ["R2 Score", "MSE", "MAE"]
@@ -73,9 +73,13 @@ def Exercise2(x, y, z_noisey):
         print(f"----------------DEGREE: {deg}-----------------")
         #Numpy scaling
         # scale_split = split.Numpy_split_scale(x, y, z_noisey, deg= deg)
+        # scale_split = split.Numpy_split_scale(x, y, z_flat, deg= deg)
         
         #Scikit scaling
-        scale_split = split.Scikit_split_scale(x, y, z_noisey, deg= deg)
+        # scale_split = split.Scikit_split_scale(x, y, z_noisey, deg= deg)
+        scale_split = split.Scikit_split_scale(x, y, z_flat, deg= deg)
+        
+        print("X shape: ", scale_split.X.shape)
         
         #Manual Regression
         # Manual_REG = reg.Manual_regression(scale_split)

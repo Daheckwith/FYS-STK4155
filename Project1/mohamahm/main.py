@@ -32,9 +32,9 @@ x, y = Fr.initialize_array(random, precision)
 xx, yy = np.meshgrid(x, y)
 
 z = Fr.franke_function(xx, yy, noise = False)
-Fr.contour_franke(xx, yy, z)
+# Fr.contour_franke(xx, yy, z)
 z_noisey, var = Fr.franke_function(xx, yy, noise)
-Fr.contour_franke(xx, yy, z_noisey)
+# Fr.contour_franke(xx, yy, z_noisey)
 # print("Var_Z: ", np.var(z_noisey), np.sqrt(np.var(z_noisey)), np.std(z_noisey))
 
 
@@ -43,7 +43,8 @@ from Exercises import Exercise1, Exercise2
 
 # Exercise1(x, y, z_noisey, var)
 
-degree_analysis = Exercise2(x, y, z_noisey)
+# degree_analysis = Exercise2(x, y, z_noisey)
+degree_analysis = Exercise2(xx, yy, z_noisey)
 
 """
 #Bootstrap
