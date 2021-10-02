@@ -25,6 +25,7 @@ class Numpy_split_scale:
         # self.X_test_scaled = X_test
         
         self.Z_train = Z_train; self.Z_test = Z_test
+        # self.Z_train = self.numpy_scaler(Z_train); self.Z_test = self.numpy_scaler(Z_test)
         
     def create_design_matrix(self, x, y, deg):
         """
@@ -62,7 +63,7 @@ class Numpy_split_scale:
         X_ = X[:,1:] # Ommitting the intercept
         
         # print("----------------------Numpy--------------------------------")
-        mean = np.mean(X_, axis=0 ); std = np.std(X_, axis=0); # var = np.var(X_, axis=0)
+        mean = np.mean(X_, axis=0); std = np.std(X_, axis=0); # var = np.var(X_, axis=0)
         X_scaled = (X_ - mean)/std
         # print("Dim X: ", X.shape, " Dim X_:", X_scaled.shape)
         # print("np.mean: ", mean, " mean.shape: ", mean.shape, "np.var: ", var, " var.shape: ", var.shape )
@@ -85,14 +86,18 @@ class Scikit_split_scale:
         self.x = x; self.y = y; self.Z = Z; self.deg = deg
         
         self.X = self.scikit_design_matrix(x, y, deg)
-        self.X_scaled = self.scikit_scaler(self.X)
+        self.X_scaled = self.scikit_scaler(self.X) #Scales X for Cross-validation later on
         
         X_train, X_test, Z_train, Z_test = train_test_split(self.X, self.Z, test_size= test_size)
         
-        self.X_train_scaled = self.scikit_scaler(X_train)
-        self.X_test_scaled = self.scikit_scaler(X_test)
+        # self.X_train_scaled = self.scikit_scaler(X_train) #Under scaling the training data behaves as expected
+        # self.X_test_scaled = self.scikit_scaler(X_test) #The test MSE is scattered everywhere and is unpredictable
+        
+        self.X_train_scaled = X_train #Use this line so you want be scaling the data without doing much changes to the code.
+        self.X_test_scaled = X_test #Looks like it tends to overfit with some discrepancies, but that doesn't make any sense.
         
         self.Z_train = Z_train; self.Z_test = Z_test
+        # self.Z_train = self.scikit_scaler(Z_train); self.Z_test = self.scikit_scaler(Z_test) #Scales the response data
     
     def scikit_design_matrix(self, x, y, deg):
         """

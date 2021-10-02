@@ -1,3 +1,9 @@
 # Ignore pycache folder
 *__pycache__*
 *.pyc
+
+
+crap.py
+regression-deprecated.py
+regression-deprecated1.py
+scikit_regression.py

@@ -20,7 +20,7 @@ import matplotlib.pyplot as plt
 
 # Presets
 mean = 0; deviation = 0.1;  #Franke
-random = False; precision = 0.005#initialize_array
+random = False; precision = 0.05#initialize_array
 noise = True #franke_function
 
 # Generating data using the Franke function
@@ -30,15 +30,20 @@ Fr= fr.Franke(mean, deviation)
 x, y = Fr.initialize_array(random, precision)
 # x, y = Fr.initialize_array(random = True, precision= 0.01)
 xx, yy = np.meshgrid(x, y)
-# z = Fr.franke_function(xx, yy, noise = False)
+
+z = Fr.franke_function(xx, yy, noise = False)
+Fr.contour_franke(xx, yy, z)
 z_noisey, var = Fr.franke_function(xx, yy, noise)
+Fr.contour_franke(xx, yy, z_noisey)
 # print("Var_Z: ", np.var(z_noisey), np.sqrt(np.var(z_noisey)), np.std(z_noisey))
+
+
 
 from Exercises import Exercise1, Exercise2
 
-Exercise1(x, y, z_noisey, var)
+# Exercise1(x, y, z_noisey, var)
 
-Exercise2(x, y, z_noisey)
+degree_analysis = Exercise2(x, y, z_noisey)
 
 """
 #Bootstrap

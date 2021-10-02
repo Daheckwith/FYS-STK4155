@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 
 def Exercise1(x, y, z_noisey, var):
     # Exercise 1
+    """
     print("MANUAL")
     scale_split = split.Numpy_split_scale(x, y, z_noisey)
     REG = reg.Manual_regression(scale_split)
@@ -30,7 +31,7 @@ def Exercise1(x, y, z_noisey, var):
     ols_beta.predict(scale_split.X_train_scaled)
     error_printout.ManualError(ols_beta, printToScreen= True)
     error_printout.ScikitError(ols_beta, printToScreen= True)
-    
+    """
     #Comfidence interval
     scale_split = split.Numpy_split_scale(x, y, z_noisey, deg= 5)
     REG = reg.Manual_regression(scale_split)
@@ -63,23 +64,31 @@ def Exercise2(x, y, z_noisey):
     print("\n \nModel Complexity")
 
     maxdegree = 11; start = 1; degrees = np.arange(start, maxdegree)
+    MSE_train = np.zeros(maxdegree - start); MSE_test = np.zeros(maxdegree - start)
     Error_list = ["R2 Score", "MSE", "MAE"]
-    degree_analysis = np.zeros((maxdegree - start, 3, 2)) # [degree, R2[0]/MSE[1]/MSA[2], Tilder[0]/Predict[1]]
+    degree_analysis = np.zeros((maxdegree - start, 3, 2)) # [degree, R2[0]/MSE[1]/MSA[2], Tilde[0]/Predict[1]]
     l, m = 0, 0
+    
     for deg in degrees:
         print(f"----------------DEGREE: {deg}-----------------")
+        #Numpy scaling
         # scale_split = split.Numpy_split_scale(x, y, z_noisey, deg= deg)
+        
+        #Scikit scaling
         scale_split = split.Scikit_split_scale(x, y, z_noisey, deg= deg)
         
-        Manual_REG = reg.Manual_regression(scale_split)
-        ols_beta = Manual_REG.fit(scale_split.X_train_scaled, scale_split.Z_train, method= "OLS")
+        #Manual Regression
+        # Manual_REG = reg.Manual_regression(scale_split)
+        # ols_beta = Manual_REG.fit(scale_split.X_train_scaled, scale_split.Z_train, method= "OLS")
         
-        # Scikit_REG = reg.Scikit_regression(scale_split)
-        # ols_beta = Scikit_REG.fit(scale_split.X_train_scaled, scale_split.Z_train, method= "OLS")
+        #Scikit Regression
+        Scikit_REG = reg.Scikit_regression(scale_split)
+        ols_beta = Scikit_REG.fit(scale_split.X_train_scaled, scale_split.Z_train, method= "OLS")
         
         error_printout = out.PrintError(scale_split)
-        # error_printout.ManualError(ols_beta)
-        error_printout.ScikitError(ols_beta, printToScreen= True)
+        # error_printout.ManualError(ols_beta, printToScreen= True) # Calculates the error using error.py
+        error_printout.ScikitError(ols_beta, printToScreen= True) # Calculates the error using Scikit
+        
         while l < 3:
             while m < 2:
                 degree_analysis[deg - start, l, m]  = error_printout.ScikitDict[Error_list[l]][m]
@@ -93,9 +102,10 @@ def Exercise2(x, y, z_noisey):
     plt.figure()
     # plt.plot(degree, degree_analysis[:, 0, 0], label = "R2 Tilde")
     # plt.plot(degree, degree_analysis[:, 0, 1], label = "R2 Predict")
-    # plt.xticks(degrees)
     plt.xticks(np.arange(maxdegree))
-    plt.plot(degrees, degree_analysis[:, 1, 0], "o-", label = "MSE Tilde")
-    plt.plot(degrees, degree_analysis[:, 1, 1], "o-", label = "MSE Predict")
+    plt.plot(degrees, degree_analysis[:, 1, 0], "o-", label = "Train1 MSE")
+    plt.plot(degrees, degree_analysis[:, 1, 1], "o-", label = "Test1 MSE")
     plt.legend()
     plt.show()
+    
+    return degree_analysis

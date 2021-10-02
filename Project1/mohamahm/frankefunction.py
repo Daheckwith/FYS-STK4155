@@ -32,6 +32,7 @@ class Franke:
         
     def franke_function(self, x, y, noise = False):
         n= len(x)
+        print("franke_function nnn:", n)
         self.noise = noise
         
         term1 =  0.75*np.exp(-(0.25*(9*x-2)**2) - 0.25*((9*y-2)**2))
@@ -41,7 +42,7 @@ class Franke:
         
         if noise:
             normal_dist = np.random.normal(self.mu, self.sigma, n)
-            return term1 + term2 + term3 + term4 + 0.1*normal_dist, np.var(normal_dist)
+            return term1 + term2 + term3 + term4 + normal_dist, np.var(normal_dist)
         else:
             return term1 + term2 + term3 + term4
         
