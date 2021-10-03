@@ -1,4 +1,5 @@
 import regression as reg
+
 # =============================================================================
 # Python Libraries
 # =============================================================================
@@ -17,74 +18,99 @@ class Resampling():
         
         self.ManualDict = None
         self.ScikitDict = None
-        self.ErrorDitct = None
-        
-        self.X_train_scaled = self.scaler.X_train_scaled; self.Z_train = self.scaler.Z_train
-        self.X_test_scaled  = self.scaler.X_test_scaled; self.Z_test = self.scaler.Z_test
-        
+        self.ErrorDict = None
+        self.ErrorDict2 = None
+    
     def Bootstrap(self, regression_class = "Scikit", fit_method = "OLS",\
                   n_bootstraps = 20, printToScreen : bool = False):
         
         print("Bootstrap")
-        X_train_scaled = self.X_train_scaled; Z_train = self.Z_train
-        X_test_scaled  = self.X_test_scaled; Z_test = self.Z_test
+        X_train_scaled = self.scaler.X_train_scaled; Z_train = self.scaler.Z_train
+        X_test_scaled  = self.scaler.X_test_scaled; Z_test = self.scaler.Z_test
         
-        boot_beta = np.zeros((X_train_scaled.shape[1], Z_train.shape[1], n_bootstraps))
-        boot_Z_pred = np.empty((Z_test.shape[0], Z_test.shape[1], n_bootstraps))
+        # boot_beta = np.zeros((X_train_scaled.shape[1], Z_train.shape[1], n_bootstraps))
+        boot_beta = np.empty((X_train_scaled.shape[1], n_bootstraps))
+        
+        # boot_Z_pred = np.empty((Z_test.shape[0], Z_test.shape[1], n_bootstraps))
+        boot_Z_resampled = np.empty((len(Z_train), n_bootstraps))
+        boot_Z_tilde = np.empty((len(Z_train), n_bootstraps))
+        boot_Z_pred = np.empty((len(Z_test), n_bootstraps))
         
         if regression_class == "Scikit":
             Scikit_REG = reg.Scikit_regression(self.scaler)
             print(Scikit_REG.__class__.__name__)
             
             for i in range(n_bootstraps):
-                # X_, Z_ = resample(X_train_scaled, Z_train)
-                X_, Z_ = resample(X_train_scaled, Z_train, random_state= 1) # seeded
+                X_, Z_ = resample(X_train_scaled, Z_train)
+                # X_, Z_ = resample(X_train_scaled, Z_train, random_state= 1) # seeded
+                boot_Z_resampled[:, i] = Z_
                 
-                # beta = Scikit_OLS.fit(X_, Z_)
                 beta = Scikit_REG.fit(X_, Z_, fit_method)
                 
+                Z_tilde = beta.predict(X_)
                 Z_pred = beta.predict(X_test_scaled)
-                boot_Z_pred[:, :, i] = Z_pred
+                
+                boot_Z_tilde[:, i] = Z_tilde
+                # boot_Z_pred[:, :, i] = Z_pred
+                boot_Z_pred[:, i] = Z_pred
         else:
             Manual_REG = reg.Manual_regression(self.scaler)
             print(Manual_REG.__class__.__name__)
             for i in range(n_bootstraps):
-                # X_, Z_ = resample(X_train_scaled, Z_train)
-                X_, Z_ = resample(X_train_scaled, Z_train, random_state= 1) # seeded
+                X_, Z_ = resample(X_train_scaled, Z_train)
+                # X_, Z_ = resample(X_train_scaled, Z_train, random_state= 1) # seeded
                 
                 beta = Manual_REG.fit(X_, Z_, fit_method)
-                
                 # boot_beta[:, :, i] = beta 
+                boot_beta[:, i] = beta 
                 
+                Z_tilde = X_ @ beta
                 Z_pred = X_test_scaled @ beta
-                boot_Z_pred[:, :, i] = Z_pred
+                # boot_Z_pred[:, :, i] = Z_pred
+                boot_Z_pred[:, i] = Z_pred
             
-            # beta_ = np.mean(boot_beta, axis = 2)
-            # Z_pred = X_test_scaled @ beta_
+            # print("beta:", boot_beta)
+            # print("Z_pred:", boot_Z_pred)
             
-            # MSE = mean_squared_error(Z_test, Z_pred)
-            # MAE = mean_absolute_error(Z_test, Z_pred)
-            # R2 = r2_score(Z_test, Z_pred)
+            beta_ = np.mean(boot_beta, axis = 1)
+            Z_pred = X_test_scaled @ beta_
             
-            # print("-----------Boot over beta -----------")
-            # print("R2 Score:", R2, "MSE:", MSE, "MSA:", MAE)
-            # print("---------------------------\n")
+            MSE = mean_squared_error(Z_test, Z_pred)
+            MAE = mean_absolute_error(Z_test, Z_pred)
+            R2 = r2_score(Z_test, Z_pred)
+            
+            print("-----------Boot over beta -----------")
+            print("R2 Score:", R2, "MSE:", MSE, "MSA:", MAE)
+            print("---------------------------\n")
         
-        Z_pred_ = np.mean(boot_Z_pred, axis = 2)
+        Z_tilde = np.mean(boot_Z_tilde, axis = 1, keepdims= 1)
+        Z_train = Z_train.reshape(-1,1)
         
-        MSE = mean_squared_error(Z_test, Z_pred_)
-        MAE = mean_absolute_error(Z_test, Z_pred_)
-        R2  = r2_score(Z_test, Z_pred_)
+        Z_pred = np.mean(boot_Z_pred, axis = 1, keepdims= 1)
+        Z_test = Z_test.reshape(-1,1); 
+        
+        # tilde_error = np.mean( np.mean((Z_train - boot_Z_tilde)**2, axis= 1, keepdims= True) )
+        tilde_error = np.mean( np.mean((boot_Z_resampled - boot_Z_tilde)**2, axis= 1, keepdims= True) )
+        tilde_bias = np.mean( (Z_train - Z_tilde)**2 ) 
+        # tilde_bias = np.mean( (boot_Z_resampled - Z_tilde)**2 ) 
+        tilde_variance = np.mean( np.var(boot_Z_tilde, axis= 1, keepdims= True) )
+        
+        test_error = np.mean( np.mean((Z_test - boot_Z_pred)**2, axis= 1, keepdims= True) )
+        test_bias = np.mean( (Z_test - Z_pred)**2 )
+        test_variance = np.mean( np.var(boot_Z_pred, axis= 1, keepdims= True) )
+        
+        MSE = mean_squared_error(Z_test, Z_pred)
+        MAE = mean_absolute_error(Z_test, Z_pred)
+        R2  = r2_score(Z_test, Z_pred)
         
         self.ErrorDict = {"R2 Score" : R2,\
-                           "MSE" : MSE, "MAE" : MAE}
-            
+                            "MSE" : MSE, "MAE" : MAE}
+        
+        self.ErrorDict2 = {"Error" : (tilde_error, test_error),\
+                           "Bias" : (tilde_bias, test_bias), "Variance" : (tilde_variance, test_variance)}
+        
         if printToScreen:
             self.printout()
-        
-        # print("-----------Boot over Z_pred----------")
-        # print("R2 Score:", R2, "MSE:", MSE, "MSA:", MAE)
-        # print("---------------------------\n")
     
     def Scikit_CrossValidation(self, fit_method, k = 5):
         print("Scikit_CrossValidation")
@@ -123,10 +149,26 @@ class Resampling():
         
     def printout(self):
         ErrorDict = self.ErrorDict
+        ErrorDict2 = self.ErrorDict2
         print("-----------Bootstrap-Predict-----------")
         print("R2 Score:", ErrorDict["R2 Score"],\
               "MSE:", ErrorDict["MSE"], "MAE:", ErrorDict["MAE"])
         print("---------------------------\n")
+        
+        # print("-----------Bootstrap-Predict-----------")
+        # print("Error:", ErrorDict2["Error"],\
+        #       "Bias:", ErrorDict2["Bias"], "Variance:", ErrorDict2["Variance"])
+        # print("---------------------------\n")
+        
+        print("-----------Tilde-----------")
+        print("Error:", ErrorDict2["Error"][0],\
+              "Bias:", ErrorDict2["Bias"][0], "Variance:", ErrorDict2["Variance"][0])
+        print("---------------------------\n")
+        
+        print("-----------Predict----------")
+        print("Error:", ErrorDict2["Error"][1],\
+              "Bias:", ErrorDict2["Bias"][1], "Variance:", ErrorDict2["Variance"][1])
+        print("----------------------------\n")
         
 
 """    

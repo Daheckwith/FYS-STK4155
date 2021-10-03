@@ -26,17 +26,18 @@ class Numpy_split_scale:
         
         self.Z_train = Z_train; self.Z_test = Z_test
         # self.Z_train = self.numpy_scaler(Z_train); self.Z_test = self.numpy_scaler(Z_test)
+        # print(self.x.shape, self.y.shape, self.Z.shape, self.X.shape, self.X_scaled.shape,\
+        #       self.X_train_scaled.shape, self.X_test_scaled.shape, self.Z_train.shape, self.Z_test.shape)
         
     def create_design_matrix(self, x, y, deg):
         """
         Creates a design matrix with columns:
         [1  x  y  x^2  y^2  xy  x^3  y^3  x^2y ...]
         """
-        print("Numpy_split_scale create_design_matrix")
+        # print("Numpy_split_scale create_design_matrix")
         if len(x.shape) > 1:
             x = np.ravel(x)
             y = np.ravel(y)
-            
 
         N = len(x)
         p = int((deg + 1)*(deg + 2)/2)
@@ -92,14 +93,16 @@ class Scikit_split_scale:
         
         X_train, X_test, Z_train, Z_test = train_test_split(self.X, self.Z, test_size= test_size)
         
-        # self.X_train_scaled = self.scikit_scaler(X_train) #Under scaling the training data behaves as expected
-        # self.X_test_scaled = self.scikit_scaler(X_test) #The test MSE is scattered everywhere and is unpredictable
+        self.X_train_scaled = self.scikit_scaler(X_train) #Under scaling the training data behaves as expected
+        self.X_test_scaled = self.scikit_scaler(X_test) #The test MSE is scattered everywhere and is unpredictable
         
-        self.X_train_scaled = X_train #Use this line so you want be scaling the data without doing much changes to the code.
-        self.X_test_scaled = X_test #Looks like it tends to overfit with some discrepancies, but that doesn't make any sense.
+        # self.X_train_scaled = X_train #Use this line so you want be scaling the data without doing much changes to the code.
+        # self.X_test_scaled = X_test #Looks like it tends to overfit with some discrepancies, but that doesn't make any sense.
         
         self.Z_train = Z_train; self.Z_test = Z_test
         # self.Z_train = self.scikit_scaler(Z_train); self.Z_test = self.scikit_scaler(Z_test) #Scales the response data
+        # print(self.x.shape, self.y.shape, self.Z.shape, self.X.shape, self.X_scaled.shape,\
+        #       self.X_train_scaled.shape, self.X_test_scaled.shape, self.Z_train.shape, self.Z_test.shape)
     
     def scikit_design_matrix(self, x, y, deg):
         """

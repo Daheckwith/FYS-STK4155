@@ -34,9 +34,9 @@ class Error:
         # ymean = np.mean(y_data, axis = 0)
         # return 1 - np.sum((y_data - y_model)**2)/np.sum((y_data - ymean)**2)
         
-        ymean = np.mean(y_data, axis = 1)
-        diff = (y_data.transpose() - ymean).transpose()
-        return 1 - np.sum((y_data - y_model)**2)/np.sum(diff**2)
+        # ymean = np.mean(y_data, axis = 1)
+        # diff = (y_data.transpose() - ymean).transpose()
+        # return 1 - np.sum((y_data - y_model)**2)/np.sum(diff**2)
         
-        # return 1. - np.sum((y_data - y_model)**2)/np.sum((y_data - np.mean(y_data))**2)
+        return 1. - np.sum((y_data - y_model)**2)/np.sum((y_data - np.mean(y_data))**2)
         # return 1 - np.sum((y_data[:-2] - y_model[:-2])**2)/np.sum((y_data[:-2] - np.mean(y_data))**2)

@@ -32,7 +32,6 @@ class Franke:
         
     def franke_function(self, x, y, noise = False):
         n= len(x)
-        print("franke_function nnn:", n)
         self.noise = noise
         
         term1 =  0.75*np.exp(-(0.25*(9*x-2)**2) - 0.25*((9*y-2)**2))

@@ -3,6 +3,7 @@ class PrintError:
         self.scaler = scaler_obj
         self.ManualDict = None
         self.ScikitDict = None
+        self.ErrorDict = None
         
         
         
@@ -35,39 +36,13 @@ class PrintError:
         MAE_pred = Err_pred.MAE(Z_test, Z_pred)
         R2_pred  = Err_pred.R2_Score(Z_test, Z_pred)
         
-        self.ManualDict = {"R2 Score" : (R2_tilde, R2_pred),\
+        self.ErrorDict = {"R2 Score" : (R2_tilde, R2_pred),\
                            "MSE" : (MSE_tilde, MSE_pred), "MAE" : (MAE_tilde, MAE_pred)}
+        # self.ManualDict = {"R2 Score" : (R2_tilde, R2_pred),\
+                           # "MSE" : (MSE_tilde, MSE_pred), "MAE" : (MAE_tilde, MAE_pred)}
             
         if printToScreen:
             self.printout(self.ManualError)
-        """
-        if printToScreen:
-            print("-----------Tilde-----------")
-            print("R2 Score(Wrong):", R2_tilde, "MSE:", MSE_tilde, "MAE:", MAE_tilde)
-            print("---------------------------\n")
-            
-            # MSE_tilde_sci = mean_squared_error(Z_train, Z_tilde)
-            # MAE_tilde_sci = mean_absolute_error(Z_train, Z_tilde)
-            # R2_tilde_sci  = r2_score(Z_train, Z_tilde)
-            
-            # print("-----------Sci-Tilde-----------")
-            # print("R2 Score:", R2_tilde_sci, "MSE:", MSE_tilde_sci, "MSA:", MAE_tilde_sci)
-            # print("---------------------------\n")
-            
-            
-            
-            print("-----------Predict----------")
-            print("R2 Score(Wrong):", R2_pred, "MSE:", MSE_pred, "MAE:", MAE_pred)
-            print("----------------------------\n")
-            
-            # MSE_pred_sci = mean_squared_error(Z_test, Z_pred)
-            # MAE_pred_sci = mean_absolute_error(Z_test, Z_pred)
-            # R2_pred_sci  = r2_score(Z_test, Z_pred)
-            
-            # print("-----------Sci-Predict-----------")
-            # print("R2 Score:", R2_pred_sci, "MSE:", MSE_pred_sci, "MSA:", MAE_pred_sci)
-            # print("---------------------------\n")
-        """
         
         
     def ScikitError(self, beta, printToScreen : bool = False):
@@ -104,27 +79,27 @@ class PrintError:
         MAE_pred = mean_absolute_error(Z_test, Z_pred)
         R2_pred  = r2_score(Z_test, Z_pred)
         
-        self.ScikitDict = {"R2 Score" : (R2_tilde, R2_pred),\
+        self.ErrorDict = {"R2 Score" : (R2_tilde, R2_pred),\
                            "MSE" : (MSE_tilde, MSE_pred), "MAE" : (MAE_tilde, MAE_pred)}
+        # self.ScikitDict = {"R2 Score" : (R2_tilde, R2_pred),\
+                           # "MSE" : (MSE_tilde, MSE_pred), "MAE" : (MAE_tilde, MAE_pred)}
         
         if printToScreen:
             self.printout(self.ScikitError)
-            
-        """
-        if printToScreen:
-            print("-----------Tilde-----------")
-            print("R2 Score:", R2_tilde, "MSE:", MSE_tilde, "MAE:", MAE_tilde)
-            print("---------------------------\n")
-            
-            
-            print("-----------Predict----------")
-            print("R2 Score:", R2_pred, "MSE:", MSE_pred, "MAE:", MAE_pred)
-            print("----------------------------\n")
-        """
-        
-        
         
     def printout(self, class_method):
+        ErrorDict = self.ErrorDict
+        
+        print("-----------Tilde-----------")
+        print("R2 Score:", ErrorDict["R2 Score"][0],\
+              "MSE:", ErrorDict["MSE"][0], "MAE:", ErrorDict["MAE"][0])
+        print("---------------------------\n")
+        
+        print("-----------Predict----------")
+        print("R2 Score:", ErrorDict["R2 Score"][1],\
+              "MSE:", ErrorDict["MSE"][1], "MAE:", ErrorDict["MAE"][1])
+        print("----------------------------\n")
+        """
         if class_method.__name__ == self.ManualError.__name__:
             
             ManualDict = self.ManualDict
@@ -152,3 +127,4 @@ class PrintError:
             print("R2 Score:", ScikitDict["R2 Score"][1],\
                   "MSE:", ScikitDict["MSE"][1], "MAE:", ScikitDict["MAE"][1])
             print("----------------------------\n")
+        """
