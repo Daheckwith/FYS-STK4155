@@ -12,6 +12,7 @@ class Numpy_split_scale:
     def __init__(self, x, y, Z, deg= 3, test_size= 0.2):
         print("Class Numpy_split_scale initializer")
         self.x = x; self.y = y; self.Z = Z; self.deg = deg
+        # print("Deg:", deg)
         
         self.X = self.create_design_matrix(x, y, deg)
         self.X_scaled = self.numpy_scaler(self.X)
@@ -87,6 +88,7 @@ class Scikit_split_scale:
     def __init__(self, x, y, Z, deg= 3, test_size= 0.2):
         print("Class Scikit_split_scale initializer")
         self.x = x; self.y = y; self.Z = Z; self.deg = deg
+        # print("Deg:", deg)
         
         self.X = self.scikit_design_matrix(x, y, deg)
         self.X_scaled = self.scikit_scaler(self.X) #Scales X for Cross-validation later on
