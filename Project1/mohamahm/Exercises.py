@@ -11,9 +11,10 @@ import output as out
 import numpy as np
 import matplotlib.pyplot as plt
 import time
+import sys
 
 def train_test_error(scaler_obj, regression_class, method= "OLS", lmb = 0, printToScreen = False, defaultError = "Scikit"):
-    print(method, lmb, printToScreen, defaultError)
+    print("Method: ", method, "lmb: ",  lmb, "print 0/1: ", printToScreen, "Error module: ",  defaultError)
     if regression_class == "Scikit":
         Scikit_REG = reg.Scikit_regression(scaler_obj)
         Scikit_REG.lmb = lmb
@@ -32,7 +33,11 @@ def train_test_error(scaler_obj, regression_class, method= "OLS", lmb = 0, print
         
     return error_printout.ErrorDict
 
-def confidence_interval(scaler_obj, regression_class, var, method= "OLS", lmb = 0):
+def confidence_interval(scaler_obj, regression_class, var= 0, method= "OLS", lmb = 0, errorbar= False):
+    print("var1: ", var)
+    if var == None:
+        var = np.var(scaler_obj.X[:,1:])
+    print("var2: ", var)
     X = scaler_obj.X_train_scaled; X_T = X.T
     var_beta_numpy = var*np.diag(np.linalg.pinv(X_T @ X))
     std_beta = np.sqrt(var_beta_numpy)
@@ -47,14 +52,14 @@ def confidence_interval(scaler_obj, regression_class, var, method= "OLS", lmb = 
         beta = beta_array
         x = np.arange(len(beta))
         plt.figure()
-        plt.title("Scikit Regression")
+        plt.title(f"Scikit Regression of a polynomial degree $p= {scaler_obj.deg}$")
     else:
         Manual_REG = reg.Manual_regression(scaler_obj)
         Manual_REG.lmb = lmb
         beta = Manual_REG.fit(scaler_obj.X_train_scaled, scaler_obj.Z_train, method= method)
         x = np.arange(len(beta))
         plt.figure()
-        plt.title("Manual Regression")
+        plt.title(f"Manual Regression of a polynomial degree $p= {scaler_obj.deg}$")
     
     
     # plt.style.use("seaborn-whitegrid")
@@ -62,13 +67,20 @@ def confidence_interval(scaler_obj, regression_class, var, method= "OLS", lmb = 
     plt.xticks(x)
     
     plt.errorbar(x, beta, CI, fmt=".", capsize= 3, label=r'$\beta_j \pm 1.96 \sigma$')
-    # plt.errorbar(x, beta, CI, fmt=".", label=r'$\beta_j \pm 1.96 \sigma$')
-    # plt.legend(labelcolor = "k", fancybox= True, facecolor= "white", shadow= True, edgecolor= "black")
     plt.legend(edgecolor= "black")
     plt.xlabel(r'index $j$')
     plt.ylabel(r'$\beta_j$')
     plt.show()
     
+    if errorbar:
+        plt.figure()
+        plt.title(r"CI estimate for each $\beta$")
+        plt.bar(x, CI)
+        plt.xlabel(r'index $j$')
+        plt.ylabel(r'CI($\beta_j$)')
+        plt.legend()
+        plt.show()
+        
 def train_vs_test_MSE(xx, yy, z_flat, regression_class, maxdegree= 10, method= "OLS", lmb= 0, cv= False):
     from sklearn.model_selection import train_test_split
     from sklearn.metrics import mean_squared_error, r2_score,\
@@ -93,7 +105,7 @@ def train_vs_test_MSE(xx, yy, z_flat, regression_class, maxdegree= 10, method= "
             
             if cv:
                 t0 = time.time()
-                cross_validation(scale_split, method = method, k = 5, lmb= lmb)
+                CV_MSE[deg - start] = cross_validation(scale_split, method = method, k = 10, lmb= lmb)
                 time_CV[deg - start] = time.time() - t0
             
             
@@ -126,7 +138,7 @@ def train_vs_test_MSE(xx, yy, z_flat, regression_class, maxdegree= 10, method= "
             
             if cv:
                 t0 = time.time()
-                cross_validation(scale_split, method = method, k = 5, lmb= lmb)
+                CV_MSE[deg - start] = cross_validation(scale_split, method = method, k = 10, lmb= lmb)
                 time_CV[deg - start] = time.time() - t0
             
             #Bootstrap
@@ -168,8 +180,10 @@ def train_vs_test_MSE(xx, yy, z_flat, regression_class, maxdegree= 10, method= "
     plt.ylabel('log10[MSE]')
     plt.legend()
     plt.show()
+    # save_fig(train_vs_test_MSE.__name__ + regression_class + method + "CV" )
+    # save_fig(train_vs_test_MSE.__name__ + regression_class + "terrainCV" + str(int(np.log10(lmb))) )
     
-    if cv:
+    if cv == "21321":
         # print(time_Boot, time_CV)
         plt.figure()
         plt.title("Measured time: Boot vs. Cross-validation")
@@ -179,6 +193,7 @@ def train_vs_test_MSE(xx, yy, z_flat, regression_class, maxdegree= 10, method= "
         plt.ylabel("t [s]")
         plt.legend()
         plt.show()
+        # save_fig(train_vs_test_MSE.__name__ + regression_class + "terrainCVTime" + str(int(np.log10(lmb))))
     
 def bias_variance_tradeoff(xx, yy, z_flat, regression_class, maxdegree= 10, method= "OLS", lmb= 0):
     from sklearn.utils import resample
@@ -263,7 +278,10 @@ def cross_validation(scaler_obj, method = "OLS", k = 5, lmb= 0):
     X_scaled = scaler_obj.X_scaled
     
     # Initialize a KFold instance
+    # kfold = KFold(n_splits = k, shuffle= True, random_state= 123)
+    # kfold = KFold(n_splits = k, shuffle= True) # I'm not sure whether I should use shuffle or not
     kfold = KFold(n_splits = k)  
+    print("k: ", k, " kfold: ", kfold)
     scores_KFold = np.zeros(k)
     
     Scikit_REG = reg.Scikit_regression(scaler_obj)
@@ -271,6 +289,7 @@ def cross_validation(scaler_obj, method = "OLS", k = 5, lmb= 0):
     
     l = 0
     for train_idx, test_idx in kfold.split(X):
+        # print("l= ", l)
         X_train = X_scaled[train_idx]; Z_train = Z[train_idx]
         X_test = X_scaled[test_idx]; Z_test = Z[test_idx]
         
@@ -281,12 +300,48 @@ def cross_validation(scaler_obj, method = "OLS", k = 5, lmb= 0):
         scores_KFold[l] = np.sum((Z_pred - Z_test)**2)/np.size(Z_pred)
         
         l += 1
-        
+      
     Scikit_CV = cross_val_score(beta, X, Z, scoring='neg_mean_squared_error', cv=kfold)
+    # Scikit_CV = cross_val_score(beta, X, Z, scoring='neg_mean_squared_error', cv=k)
     
-    # print("Scikit_CV: ", -Scikit_CV, "scores_KFold: ", scores_KFold)
+    # print("Scikit_CV: ", -Scikit_CV, "\n", "scores_KFold: ", scores_KFold)
+    # print(f"Scikit_CV: {-Scikit_CV} \n\nscores_KFold: {scores_KFold}")
+    print(f"Scikit_CV: {np.mean(-Scikit_CV)} \n\nscores_KFold: {np.mean(scores_KFold)}")
     return np.mean(-Scikit_CV)
 
+def deg_cross_validation(xx, yy, z_flat, regression_class, maxdegree= 10, method= "OLS", lmb= 0):
+    maxdegree = maxdegree + 1; start = 1; degrees = np.arange(start, maxdegree)
+    CV_MSE = np.zeros(maxdegree - start)
+    time_CV = np.zeros(maxdegree - start)
+    
+    print("lmb: ", lmb)
+    if regression_class == "Scikit":
+        for deg in degrees:
+            print(f"----------------DEGREE: {deg}-----------------")
+            scale_split = split.Scikit_split_scale(xx, yy, z_flat, deg= deg)
+            t0 = time.time()
+            CV_MSE[deg - start] = cross_validation(scale_split, method = method, k = 10, lmb= lmb)
+            time_CV[deg - start] = time.time() - t0
+    
+    else:
+        for deg in degrees:
+            print(f"----------------DEGREE: {deg}-----------------")
+            scale_split = split.Numpy_split_scale(xx, yy, z_flat, deg= deg)
+            t0 = time.time()
+            CV_MSE[deg - start] = cross_validation(scale_split, method = method, k = 10, lmb= lmb)
+            time_CV[deg - start] = time.time() - t0
+    
+    plt.figure()
+    plt.title(method + f" Terrain Cross-validation $\lambda=$ {lmb}")
+    # plt.title("Terrain Cross-validation OLS")
+    plt.plot(degrees, np.log10(CV_MSE), "o-", label= "CV Test Error")
+    plt.xlabel('Polynomial degree')
+    plt.ylabel('log10[MSE]')
+    plt.legend()
+    plt.show()
+    # save_fig(deg_cross_validation.__name__ + f"terrain{int(np.log10(lmb))}" + method)
+    # save_fig(deg_cross_validation.__name__ + f"terrain" + method)
+                
     
 def Ridge_Lasso_MSE(xx, yy, z_flat, scaler_opt, regression_opt):
     if scaler_opt == "Numpy":
@@ -321,146 +376,204 @@ def Ridge_Lasso_MSE(xx, yy, z_flat, scaler_opt, regression_opt):
     plt.show()
     # save_fig("RidgeLassoTrainTestMSE")
 
-def R_L_model_complexity(xx, yy, z_flat, regression_opt = "Scikit", maxdegree= 10, method= "Ridge", lmb= 1):
-    train_vs_test_MSE(xx, yy, z_flat, regression_opt, maxdegree= maxdegree, method= method, lmb= lmb)
-    plt.title(method + f"train vs. test MSE for $\lambda=$ {lmb}")
+def R_L_model_complexity(xx, yy, z_flat, regression_opt = "Scikit", maxdegree= 10, method= "Ridge", lmb= 1, cv= False):
+    train_vs_test_MSE(xx, yy, z_flat, regression_opt, maxdegree= maxdegree, method= method, lmb= lmb, cv= cv)
+    plt.title(regression_opt + " " + method + f" train vs. test MSE for $\lambda=$ {lmb}")
 
 def R_L_bias_variance(xx, yy, z_flat, regression_class = "Scikit", maxdegree= 10, method= "Ridge", lmb= 1):
     bias_variance_tradeoff(xx, yy, z_flat, regression_class = regression_class, maxdegree= maxdegree, method= method, lmb= lmb)
-    plt.title(method + f"Bias-Variance tradeoff for $\lambda=$ {lmb}")
+    plt.title(regression_class + " " + method + f" Bias-Variance tradeoff for $\lambda=$ {lmb}")
 
-
-def Exercise_4_5(xx, yy, z_flat, scaler_opt, regression_opt= "Scikit", maxdegree= 10, method= "Ridge", lmb= 1):
-    if scaler_opt == "Numpy":
-        scaler = split.Numpy_split_scale(xx, yy, z_flat, deg= 5)
-    else:
-        scaler = split.Scikit_split_scale(xx, yy, z_flat, deg= 5)
+def lambda_loop(func_obj, xx, yy, z_flat, regression_class, maxdegree= 10,\
+                method= "OLS", lmb= 0, start= -4, stop= 4, nlambdas= 9, var = 0, cv= False):
     
+    print("lambda_loop Method: ", method)
+    lambdas = np.logspace(start, stop, nlambdas)
+    
+    for i in range(nlambdas):
+        lmb = lambdas[i]
+        print("lmb", lmb)
+        func_obj(xx, yy, z_flat, regression_class, maxdegree, method, lmb)
+        plt.title(method + " " + func_obj.__name__ + f" $\lambda=$ {lmb}")
+        save_fig(method + func_obj.__name__ + f"{int(np.log10(lmb))}--")
+
+
+
+def plot_estimators(xx, yy, z_flat, regression_class= "Scikit", maxdegree= 10, method= "OLS", lmb= 0):
+    maxdegree = maxdegree + 1; start = 1; degrees = np.arange(start, maxdegree)
+    for deg in degrees:
+        print(f"----------------DEGREE: {deg}-----------------")
+        scaler= split.Scikit_split_scale(xx, yy, z_flat, deg= deg)
+    
+        Scikit_REG = reg.Scikit_regression(scaler)
+        Scikit_REG.lmb = lmb
+        beta = Scikit_REG.fit(scaler.X_train_scaled, scaler.Z_train, method= method)
+        beta_array = np.copy(beta.coef_) 
+        beta_array[0] += beta.intercept_
+        beta = beta_array
+        x = np.arange(len(beta))
+        
+        plt.figure()
+        plt.title(method + f" estimators for a polynomial degree $p= {scaler.deg}$ and $\lambda= {lmb}$")
+        plt.style.use("seaborn-darkgrid")
+        plt.xticks(x)
+        
+        plt.plot(x, beta, ".", label=r'$\beta_j \pm 1.96 \sigma$')
+        # plt.errorbar(x, beta, CI, fmt=".", capsize= 3, label=r'$\beta_j \pm 1.96 \sigma$')
+        plt.legend(edgecolor= "black")
+        plt.xlabel(r'index $j$')
+        plt.ylabel(r'$\beta_j$')
+        plt.show()
+        # save_fig(method + plot_estimators.__name__ + f"{int(np.log10(lmb))}{deg}")
+
+    
+def regression(xx, yy, z_flat, method= "OLS"):
+    if method == "Ridge":
+        lmb= 0.001
+        deg= 16 #[17, 19] or 16
+    else: #Lasso
+        lmb= 0.001
+        deg= 14 #[12, 16] best 14
+    
+    if method == "OLS":
+        scaler = split.Numpy_split_scale(xx, yy, z_flat, deg= 5)
+        print("OLS:", scaler.deg)
+        
+        Scikit_REG = reg.Scikit_regression(scaler)
+        Scikit_REG.lmb = lmb
+        
+        beta = Scikit_REG.fit(scaler.X_train_scaled, scaler.Z_train, method= method)
+        Z = beta.predict(scaler.X_scaled)
+    
+    elif method == "Ridge":
+        scaler = split.Numpy_split_scale(xx, yy, z_flat, deg= deg)
+        print("Ridge:", scaler.deg)
+        Scikit_REG = reg.Scikit_regression(scaler)
+        Scikit_REG.lmb = lmb
+        
+        beta = Scikit_REG.fit(scaler.X_train_scaled, scaler.Z_train, method= method)
+        Z = beta.predict(scaler.X_scaled)
+    
+    else: #Lasso
+        scaler = split.Numpy_split_scale(xx, yy, z_flat, deg= deg)
+        print("Lasso:", scaler.deg)
+        Scikit_REG = reg.Scikit_regression(scaler)
+        Scikit_REG.lmb = lmb
+        
+        beta = Scikit_REG.fit(scaler.X_train_scaled, scaler.Z_train, method= method)
+        Z = beta.predict(scaler.X_scaled)
+    
+    return Z
+
+def unflatten_z(z, z_flat):
+    print(z.shape, z_flat.shape)
+    
+    Max = np.max(z_flat)
+    Min = np.min(z_flat)
+    for i in range(z_flat.shape[0]):
+        if np.isnan(z_flat[i]):
+            print(z_flat[i])
+            z_flat[i] = 0
+        elif np.isposinf(z_flat[i]):
+            print(z_flat[i])
+            z_flat[i] = Max
+        elif np.isneginf(z_flat[i]):
+            print(z_flat[i])
+            z_flat[i] = Min
+    
+    print(Max, Min)
+    array = np.zeros(z.shape)
+    for i in range(z.shape[0]):
+        # print("i: ", i)
+        # array[i,:] = np.zeros(z.shape[1])
+        array[i,:] = z_flat[ z.shape[1]*i : z.shape[1]*(i+1) ]
+        # print(array[i] == z[i])
+    return array
+        
+def terrain():
+    import numpy as np
+    from imageio import imread
+    import matplotlib.pyplot as plt
+    from mpl_toolkits.mplot3d import Axes3D
+    from matplotlib import cm
+    import numpy as np
+    from numpy.random import normal, uniform
+    from mpl_toolkits.axes_grid1 import make_axes_locatable
+    
+    # Load the terrain
+    Dir = "../mohamahm/Data/"
+    file= Dir + "SRTM_data_Norway_1.tif"
+    terrain = imread(file)
+    
+    N = 200
+    deg = 5 # polynomial order
+    terrain = terrain[:N,:N]
+    # Creates mesh of image pixels
+    x = np.linspace(0,1, np.shape(terrain)[0])
+    y = np.linspace(0,1, np.shape(terrain)[1])
+    xx, yy = np.meshgrid(x,y)
+    
+    z = terrain
+    z_flat = np.ravel(z)
+    
+    # X = create_X(x_mesh, y_mesh,m)
+    # scale_split = split.Scikit_split_scale(xx, yy, z_flat, deg= deg)
+    
+    # fig, ax = plt.subplots()
+    # divider = make_axes_locatable(ax)
+    # cax = divider.append_axes('right', size='5%', pad=0.05)
+    
+    # im = ax.imshow(terrain, cmap='bone')
+    
+    # fig.colorbar(im, cax=cax, orientation='vertical')
+    # plt.show()
+
+    # Show the terrain
+    # fig = plt.figure()
+    # plt.title('Terrain over Norway 1')
+    # pos= plt.imshow(terrain, cmap='gray')
+    # fig.colorbar(pos)
+    # plt.xlabel('X')
+    # plt.ylabel('Y')
+    # plt.show()
+    
+    return xx, yy, z, z_flat
+
+
+def save_fig(name):
+    plt.savefig(name, dpi= 300, bbox_inches= 'tight')
+
+def Exercise_4(xx, yy, z_flat, scaler_opt, regression_opt= "Scikit", maxdegree= 10, method= "Ridge", lmb= 1):
+    
+    #25 Degrees analysis lmb= 1000
     # R_L_model_complexity(xx, yy, z_flat, regression_opt = "Scikit", maxdegree= 25, method= method, lmb= 1000)
     # save_fig(Ridge_model_complexity.__name__ + f"{int(np.log10(1000))}" + "maxdegree25")
     # R_L_bias_variance(xx, yy, z_flat, regression_class = "Scikit", maxdegree= 25, method= method, lmb= 1000)
     # save_fig(Ridge_bias_variance.__name__ + f"{int(np.log10(lmb))}" + "maxdegree25" )
     
-    nlambdas = 9; k = 5
+    
+    nlambdas = 9
     lambdas = np.logspace(-4, 4, nlambdas)
-    cv_lmb = np.zeros((nlambdas, k))
+    # cv_lmb = np.zeros((nlambdas, k))
     for i in range(nlambdas):
         lmb = lambdas[i]
-        lmb_str = str(lmb)
         
-        # cv_lmb[i,:] = cross_validation(scaler, method= method, k= 5, lmb= lmb)
-        
-        R_L_model_complexity(xx, yy, z_flat, regression_opt = "Scikit", maxdegree= 10, method= method, lmb= lmb)
-        # save_fig(Ridge_model_complexity.__name__ + f"{int(np.log10(lmb))}")
+        R_L_model_complexity(xx, yy, z_flat, regression_opt = "Scikit", maxdegree= 10, method= method, lmb= lmb, cv= True)
+        # save_fig(method + R_L_model_complexity.__name__ + f"{int(np.log10(lmb))}")
         R_L_bias_variance(xx, yy, z_flat, regression_class = "Scikit", maxdegree= 10, method= method, lmb= lmb)
         # save_fig(Ridge_bias_variance.__name__ + f"{int(np.log10(lmb))}")
-    
-    # plt.figure()
-    # folds = np.arange(1,k+1)
-    # for i in range(nlambdas):
-    #     lmb = lambdas[i]
-    #     plt.plot(folds, cv_lmb[i], "o-", label= f"$\lambda=$ {lmb}")
-    
-    # plt.xticks(folds)
-    # plt.title(method + ": Cross-Validaion score for each $\lambda$, deg= 5")
-    # plt.xlabel("${fold}_k$")
-    # plt.ylabel("CV Score")
-    # plt.legend()
-    # plt.show()
-    # save_fig(cross_validation.__name__ + "-Ridge")
 
-def save_fig(name):
-    plt.savefig(name, dpi= 300, bbox_inches= 'tight')
+"""
+# if func_obj.__name__ == confidence_interval.__name__:
+#     scaler = split.Numpy_split_scale(xx, yy, z_flat, deg= 5)
+#     # scaler = split.Scikit_split_scale(xx, yy, z_flat, deg= 5)
+#     # func_obj(scaler, regression_class, var, method, lmb, errorbar= True)
+#     for i in range(nlambdas):
+#         lmb = lambdas[i]
+#         print("lmb", lmb)
+#         func_obj(scaler, regression_class, var, method, lmb, errorbar= True)
+#         plt.title(method + " " + func_obj.__name__ + f" $\lambda=$ {lmb}")
+#         save_fig(method + func_obj.__name__ + f"{int(np.log10(lmb))}")
     
-    
-def Exercise2(x, y, z, n_bootstraps = 100):
-    #Bias-Variance Trade-off
-    print("\n \nModel Complexity")
-    
-    maxdegree = 11; start = 1; degrees = np.arange(start, maxdegree)
-    MSE_train = np.zeros(maxdegree - start); MSE_test = np.zeros(maxdegree - start)
-    Error_list = ["R2 Score", "MSE", "MAE"]
-    Error_list2 = ["Error", "Bias", "Variance"]
-    degree_analysis = np.zeros((maxdegree - start, 3, 2)) # [degree, R2[0]/MSE[1]/MSA[2], Tilde[0]/Predict[1]]
-    degree_analysis2 = np.zeros((maxdegree - start, 3, 2)) # [degree, Error[0]/Bias[1]/Variance[2], Predict[0]]
-    l, m = 0, 0
-    
-    for deg in degrees:
-        print(f"----------------DEGREE: {deg}-----------------")
-        
-        #Numpy scaling
-        # scale_split = split.Numpy_split_scale(x, y, z_noisey, deg= deg)
-        # scale_split = split.Numpy_split_scale(x, y, z_flat, deg= deg)
-        
-        #Scikit scaling
-        # scale_split = split.Scikit_split_scale(x, y, z_noisey, deg= deg)
-        scale_split = split.Scikit_split_scale(x, y, z, deg= deg)
-        
-        Res = res.Resampling(scale_split)
-        Res.Bootstrap(regression_class= "Scikit", fit_method = "OLS",\
-                        n_bootstraps = n_bootstraps, printToScreen= False)
-        # Res.Bootstrap(regression_class= "Manual", fit_method = "OLS",\
-                       # n_bootstraps = n_bootstraps, printToScreen= False)
-        
-        while l < 3:
-            while m < 2:
-                degree_analysis2[deg - start, l, m]  = Res.ErrorDict2[Error_list2[l]][m]
-                print("l: ", l, "m: ", m, "array: ", degree_analysis2[deg - start, l, m])
-                m += 1
-            l += 1
-            m = 0
-        l = 0
-    
-    
-    plt.close()
-    plt.figure()
-    plt.xticks(np.arange(maxdegree))
-    
-    plt.plot(degrees, degree_analysis2[:, 0, 0], "o-", label= "Tilde Error")
-    # plt.plot(degrees, degree_analysis2[:, 1, 0], "o-", label= "Tilde Bias")
-    # plt.plot(degrees, degree_analysis2[:, 2, 0], "o-", label= "Tilde Variance")
-    
-    plt.plot(degrees, degree_analysis2[:, 0, 1], "o-", label= "Test Error")
-    # plt.plot(degrees, degree_analysis2[:, 1, 1], "o-", label= "Test Bias")
-    # plt.plot(degrees, degree_analysis2[:, 2, 1], "o-", label= "Test Variance")
-    
-    plt.legend()
-    plt.show()
-    
-        
-    """
-        print("X shape: ", scale_split.X.shape, x.shape, y.shape, z.shape)
-        
-        #Manual Regression
-        # Manual_REG = reg.Manual_regression(scale_split)
-        # ols_beta = Manual_REG.fit(scale_split.X_train_scaled, scale_split.Z_train, method= "OLS")
-        
-        #Scikit Regression
-        Scikit_REG = reg.Scikit_regression(scale_split)
-        ols_beta = Scikit_REG.fit(scale_split.X_train_scaled, scale_split.Z_train, method= "OLS")
-        
-        error_printout = out.PrintError(scale_split)
-        # error_printout.ManualError(ols_beta, printToScreen= True) # Calculates the error using error.py
-        error_printout.ScikitError(ols_beta, printToScreen= True) # Calculates the error using Scikit
-        
-        
-        while l < 3:
-            while m < 2:
-                degree_analysis[deg - start, l, m]  = error_printout.ScikitDict[Error_list[l]][m]
-                m += 1
-            l += 1
-            m = 0
-        l = 0
-        
-
-    plt.close()
-    plt.figure()
-    # plt.plot(degree, degree_analysis[:, 0, 0], label = "R2 Tilde")
-    # plt.plot(degree, degree_analysis[:, 0, 1], label = "R2 Predict")
-    plt.xticks(np.arange(maxdegree))
-    plt.plot(degrees, degree_analysis[:, 1, 0], "o-", label = "Train1 MSE")
-    plt.plot(degrees, degree_analysis[:, 1, 1], "o-", label = "Test1 MSE")
-    plt.legend()
-    plt.show()
-    """
-    return degree_analysis
+#     sys.exit(0)
+"""

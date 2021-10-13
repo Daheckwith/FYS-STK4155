@@ -1,4 +1,4 @@
- import frankefunction as fr
+import frankefunction as fr
 import error as err
 import  split_scale as split
 import regression as reg
@@ -24,7 +24,6 @@ random = True; precision = 0.05 #initialize_array
 noise = True #franke_function
 
 # Generating data using the Franke function
-# Fr= fr.Franke(mean = 0, deviation = 0.02, seed = 4155)
 Fr= fr.Franke(mean, deviation)
 
 x, y = Fr.initialize_array(random, precision)
@@ -32,29 +31,31 @@ x, y = Fr.initialize_array(random, precision)
 xx, yy = np.meshgrid(x, y)
 
 plt.close("all")
+plt.style.use("seaborn-darkgrid")
+
 z = Fr.franke_function(xx, yy, noise = False)
-# Fr.contour_franke(xx, yy, z)
+# Fr.plot_contour(xx, yy, z)
+# Fr.plot_3D(xx, yy, z)
+
 z_noisey, var = Fr.franke_function(xx, yy, noise)
-# Fr.contour_franke(xx, yy, z_noisey)
-# print("Var_Z: ", np.var(z_noisey), np.sqrt(np.var(z_noisey)), np.std(z_noisey))
+# Fr.plot_contour(xx, yy, z_noisey)
+# Fr.plot_3D(xx, yy, z_noisey)
+
 z_flat = np.ravel(z_noisey)
 # z_flat = z_noisey.reshape((-1,1))
 # -------------------------------------------------------------------------------------
 
-# from Exercises import confidence_interval, train_test_error,\
-#     train_vs_test_MSE, bias_variance_tradeoff, cross_validation, save_fig,\
-#         Ridge_Lasso_MSE, Ridge_model_complexity
 from Exercises import *
 
-print("Choose exercise! Options [\"Exercise1\", \"Exercise2\", \"Exercise3\", \"Exercise4\"]")
+print("Choose exercise! Options [\"Exercise1\", \"Exercise2\", \"Exercise3\", \"Exercise4\", \"Exercise5\"]")
 # exercise = str(input()) # Provide an input
-exercise = "Exercise3" # or change this line and comment out the one above
+exercise = "Exercise6" # or change this line and comment out the one above
 
 scaler_opt = "Numpy" 
 # scaler_opt = "Scikit"
 
-regression_opt = "Manual" 
-# regression_opt = "Scikit"
+# regression_opt = "Manual" 
+regression_opt = "Scikit"
 
 method = "OLS"
 # method = "Ridge"
@@ -71,9 +72,11 @@ if exercise in ["Exercise1", "Exercise 1"]:
     
     """
     if scaler_opt == "Numpy":
-        scaler = split.Numpy_split_scale(xx, yy, z_flat, deg= 2)
+        scaler = split.Numpy_split_scale(xx, yy, z_flat, deg= 5)
     else:
-        scaler = split.Scikit_split_scale(xx, yy, z_flat, deg= 2)
+        scaler = split.Scikit_split_scale(xx, yy, z_flat, deg= 5)
+    
+    print(xx.shape, yy.shape, z_flat.shape, z_noisey.shape)
     
     print("-------train_test_error--------")
     train_test_error(scaler, regression_class= regression_opt, method = "OLS", printToScreen= True, defaultError= "Scikit")
@@ -91,6 +94,7 @@ elif exercise in ["Exercise2", "Exercise 2"]:
     Otherwise if "Scikit" is selected then everything is done using Scikit.
     
     """
+    
     print("Method: ", method, exercise)
     print("---------train_vs_test_MSE----------")
     train_vs_test_MSE(xx, yy, z_flat, regression_class= regression_opt, maxdegree= 20)
@@ -106,60 +110,75 @@ elif exercise in ["Exercise3", "Exercise 3"]:
     using both a KFold-algorithm and cross_val_score from Scikit.
     """
     
-    maxdegree = 20
+    maxdegree = 6
     train_vs_test_MSE(xx, yy, z_flat, regression_class= regression_opt, maxdegree= maxdegree, method= "OLS", lmb= 0, cv= True)
     # save_fig(train_vs_test_MSE.__name__ + regression_opt + f"maxdegree={maxdegree}")
 
 elif exercise in ["Exercise4", "Exercise 4"]:
     
-    Exercise_4_5(xx, yy, z_flat, scaler_opt, regression_opt= "Scikit", maxdegree= 10, method= "Ridge")
+    Exercise_4(xx, yy, z_flat, scaler_opt, regression_opt= "Scikit", maxdegree= 10, method= "Ridge")
     
-    """
-    if scaler_opt == "Numpy":
-        scaler = split.Numpy_split_scale(xx, yy, z_flat, deg= 5)
-    else:
-        scaler = split.Scikit_split_scale(xx, yy, z_flat, deg= 5)
-    
-    # Ridge_model_complexity(xx, yy, z_flat, regression_opt = "Scikit", maxdegree= 25, lmb= 1000)
-    # save_fig(Ridge_model_complexity.__name__ + f"{int(np.log10(1000))}" + "maxdegree25")
-    # Ridge_bias_variance(xx, yy, z_flat, regression_class = "Scikit", maxdegree= 25, method= "Ridge", lmb= 1000)
-    # save_fig(Ridge_bias_variance.__name__ + f"{int(np.log10(lmb))}" + "maxdegree25" )
-    
-    nlambdas = 9; k = 5
-    lambdas = np.logspace(-4, 4, nlambdas)
-    cv_lmb = np.zeros((nlambdas, k))
-    for i in range(nlambdas):
-        lmb = lambdas[i]
-        lmb_str = str(lmb)
-        
-        cv_lmb[i,:] = cross_validation(scaler, method= method, k= 5, lmb= lmb)
-        
-        # R_L_model_complexity(xx, yy, z_flat, regression_opt = "Scikit", maxdegree= 10, method= method, lmb= lmb)
-        # save_fig(Ridge_model_complexity.__name__ + f"{int(np.log10(lmb))}")
-        # R_L_bias_variance(xx, yy, z_flat, regression_class = "Scikit", maxdegree= 10, method= method, lmb= lmb)
-        # save_fig(Ridge_bias_variance.__name__ + f"{int(np.log10(lmb))}")
-    
-    plt.figure()
-    folds = np.arange(1,k+1)
-    for i in range(nlambdas):
-        lmb = lambdas[i]
-        plt.plot(folds, cv_lmb[i], "o-", label= f"$\lambda=$ {lmb}")
-    
-    plt.xticks(folds)
-    plt.title(method + ": Cross-Validaion score for each $\lambda$, deg= 5")
-    plt.xlabel("${fold}_k$")
-    plt.ylabel("CV Score")
-    plt.legend()
-    plt.show()
-    # save_fig(cross_validation.__name__ + "-Ridge")
-    """
 elif exercise in ["Exercise5", "Exercise 5"]:
+    method= "Lasso"
+    maxdegree = 10
     
-    Ridge_Lasso_MSE(xx, yy, z_flat, scaler_opt, regression_opt)
+    # lambda_loop(plot_estimators, xx, yy, z_flat, regression_class= regression_opt, maxdegree= 10,\
+                # method= method)
     
-    Exercise_4_5(xx, yy, z_flat, scaler_opt, regression_opt= "Scikit", maxdegree= 10, method= "Lasso")
-    
+    lambda_loop(bias_variance_tradeoff, xx, yy, z_flat, regression_class= regression_opt, maxdegree= maxdegree,\
+                method= method)
+        
+    # lambda_loop(deg_cross_validation, xx, yy, z_flat, regression_class= regression_opt, maxdegree= maxdegree,\
+                # method= method, lmb= None, start= -4, stop= 4, nlambdas= 9)
 
+elif exercise in ["Exercise6", "Exercise 6"]:
+    xx, yy, z, z_flat = terrain()
+    # method= "OLS"
+    method= "Ridge"
+    # method= "Lasso"
+    maxdegree= 10
+    print(xx.shape, yy.shape, z.shape, z_flat.shape)
+    # Exercise 1
+    # scaler = split.Numpy_split_scale(xx, yy, z_flat, deg= 5)
+    # var = np.var(scaler.X[:,1:])
+    # if scaler_opt == "Numpy":
+    #     scaler = split.Numpy_split_scale(xx, yy, z_flat, deg= 5)
+    # else:
+    #     scaler = split.Scikit_split_scale(xx, yy, z_flat, deg= 5)
+    
+    # confidence_interval(scaler, regression_class= regression_opt, var= var, method = "OLS", errorbar= True)
+    
+    # Exercise 2
+    
+    print("---------train_vs_test_MSE----------")
+    # train_vs_test_MSE(xx, yy, z_flat, regression_class= regression_opt, maxdegree= 10)
+    # save_fig(train_vs_test_MSE.__name__ + regression_opt + "terrain")
+    print("---------bias_variance_tradeoff---------") 
+    # bias_variance_tradeoff(xx, yy, z_flat, regression_class= regression_opt, maxdegree= 8) #0.05, 0.02, 0.01 : maxdegree = 8, 15/18, 20
+    # plt.title(regression_opt + f" Regression N= {Fr.steps}" )
+    # save_fig(bias_variance_tradeoff.__name__ + regression_opt + f"N={Fr.steps}" + "terrain")
+    
+    #OLS
+    # maxdegree = 10
+    # train_vs_test_MSE(xx, yy, z_flat, regression_class= regression_opt, maxdegree= maxdegree, method= "OLS", lmb= 0, cv= True)
+    # deg_cross_validation(xx, yy, z_flat, regression_class= regression_opt, maxdegree= maxdegree, method= "OLS")
+    
+    
+    # Ridge/Lasso
+    # lambda_loop(deg_cross_validation, xx, yy, z_flat, regression_class= regression_opt, maxdegree= maxdegree,\
+                # method= method, lmb= None, start= -4, stop= 1, nlambdas= 6)
+    
+    # Z = regression(xx, yy, z_flat, method= method)
+    # Z_pred= unflatten_z(z, Z) #z(200,200) Z(40000) --> (200, 200)
+    # print(xx.shape, yy.shape, Z.shape, Z_pred.shape)
+    # Fr.plot_3D(xx, yy, Z_pred, title= "erer 331") 
+    
+    """
+    We wanted to plot but we couldn't find out why
+    matplotlib never rendered our plots. We thought it's
+    either NaN, inf or -inf. But it doesn't seem like it.
+    """
+    
 if __name__ == "__main__":
     print("Running main.py")
 

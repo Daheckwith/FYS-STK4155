@@ -55,11 +55,14 @@ class Scikit_regression:
         return ridge.fit(X, Z)
         
     def Lasso(self, X, Z):
+        # print("k;jdlfjdsjf LASSOO OOOOOO")
         from sklearn.linear_model import Lasso
         lmb = self.lmb
-        # lasso = Lasso(alpha= lmb, tol= 1e-3)
         # lasso = Lasso(alpha= lmb, tol= 1e-3, max_iter= 1e6)
-        lasso = Lasso(alpha= lmb, max_iter= 1e6)
+        lasso = Lasso(alpha= lmb, tol= 0.1, max_iter= 1e6)
+        # lasso = Lasso(lmb)
+        # RegLasso = linear_model.Lasso(lmb)
+        
         return lasso.fit(X, Z)
         
     def fit(self, X, Z, method= "OLS"):

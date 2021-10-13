@@ -47,7 +47,7 @@ class Franke:
         else:
             return term1 + term2 + term3 + term4
         
-    def contour_franke(self, x, y, z):
+    def plot_contour(self, x, y, z, title= False):
         # from mpl_toolkits.mplot3d import Axes3D
         from matplotlib import cm
         from matplotlib.ticker import LinearLocator, FormatStrFormatter
@@ -62,10 +62,13 @@ class Franke:
         cset = ax.contour(x, y, z, zdir='y', cmap=cm.coolwarm)
         cset = ax.contour(x, y, z, zdir='z', cmap=cm.coolwarm)
         
-        if self.noise:
-            plt.title(f"Franke function (noisey $\sigma$: {self.sigma})")
+        if title == False:
+            if self.noise:
+                plt.title(f"Franke function (noisey $\sigma$: {self.sigma})")
+            else:
+                plt.title("Franke function (no noise)")
         else:
-            plt.title("Franke function (no noise)")
+            plt.title(title)
         
         # Customize the z axis
         ax.set_zlim(-0.10, 1.40)
@@ -76,10 +79,10 @@ class Franke:
         ax.set_ylabel('Y')
         ax.set_zlabel('Z')
         # plt.draw()
-        
+        # fig.savefig(f"plot_franke_{hex(id(Franke))}", dpi=300, bbox_inches='tight')
         plt.show()
         
-    def plot_franke(self, x, y, z):
+    def plot_3D(self, x, y, z, title= False):
         # from mpl_toolkits.mplot3d import Axes3D
         from matplotlib import cm
         from matplotlib.ticker import LinearLocator, FormatStrFormatter
@@ -91,11 +94,13 @@ class Franke:
         
         surf = ax.plot_surface(x, y, z, cmap = cm.coolwarm, \
                                 linewidth = 0, antialiased = False)
-        
-        if self.noise:
-            plt.title(f"Franke function (noisey $\sigma$: {self.sigma})")
+        if title == False:
+            if self.noise:
+                plt.title(f"Franke function (noisey $\sigma$: {self.sigma})")
+            else:
+                plt.title("Franke function (no noise)")
         else:
-            plt.title("Franke function (no noise)")
+            plt.title(title)
         
         # Customize the z axis
         ax.set_zlim(-0.10, 1.40)
