@@ -1,0 +1,9 @@
+# Ignore pycache folder
+*__pycache__*
+*.pyc
+
+Figures
+Deprecated
+
+gitignore_py.txt
+
