@@ -42,7 +42,7 @@ z_flat = z_noisey.ravel()
 # -------------------------------------------------------------------------------------
 
 # Generating test case
-scaler = scaler.Numpy_split_scale(xx, yy, z_flat, deg= 3)
+scaler = scaler.Numpy_split_scale(xx, yy, z_flat, deg= 5)
 print("scaler: ", scaler.X.shape, scaler.Z.shape)
 
 X_train = scaler.X_train_scaled; Z_train = scaler.Z_train
@@ -55,7 +55,7 @@ print("OLS: ", beta_OLS, "\n")
 
 # OLS
 stops1, MSE_cache1, learning_rates1, batch_sizes1 =\
-    analysis(X_train, Z_train, X_test, Z_test, Manual_REG, method= "OLS", plot_opt= True)
+    analysis(X_train, Z_train, X_test, Z_test, Manual_REG, method= "OLS", analysis= "batch_size", plot_opt= True)
 
 plt.close("all")
 make_heat_map(stops1/stops1.max(), batch_sizes1, np.log10(learning_rates1), vmin= 0, vmax= 1)
@@ -66,7 +66,7 @@ save_fig("Figures/OLS-Epochs.png")
 plt.show()
 
 make_heat_map(MSE_cache1, batch_sizes1, np.log10(learning_rates1), fmt = ".3f")
-title_string = "OLS \n MSE as function of the learning rate and batch size"
+title_string = "OLS \n MSE as a function of the learning rate and batch size"
 plt.title(title_string, fontsize= 12)
 plt.xlabel("Batch size"); plt.ylabel(r"$\log(\eta)$")
 save_fig("Figures/OLS-MSE.png")
@@ -79,7 +79,7 @@ optimal_batch_size = batch_sizes1[optimal_idx]
 
 # Ridge
 stops2, MSE_cache2, learning_rates2, lmbs =\
-    analysis(X_train, Z_train, X_test, Z_test, Manual_REG, method= "Ridge", plot_opt= True, batch_size= optimal_batch_size)
+    analysis(X_train, Z_train, X_test, Z_test, Manual_REG, method= "Ridge", analysis= "hyperparameter", plot_opt= True, batch_size= optimal_batch_size)
 
 
 make_heat_map(stops2/stops2.max(), np.log10(lmbs), np.log10(learning_rates2), vmin= 0, vmax= 1)
@@ -90,7 +90,7 @@ save_fig("Figures/Ridge-Epochs.png")
 plt.show()
 
 make_heat_map(MSE_cache2, np.log10(lmbs), np.log10(learning_rates1), fmt = ".3f")
-title_string = "Ridge \n MSE as function of the learning rate and batch size"
+title_string = "Ridge \n MSE as a function of the learning rate and hyperparameter $\lambda$"
 plt.title(title_string, fontsize= 12)
 plt.xlabel(r"$\log(\lambda)$"); plt.ylabel(r"$\log(\eta)$")
 save_fig("Figures/Ridge-MSE.png")

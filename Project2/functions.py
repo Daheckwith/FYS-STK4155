@@ -8,41 +8,53 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-def analysis(X_train, Z_train, X_test, Z_test, Manual_REG, method= "OLS", plot_opt = False, batch_size= None):
-    GD = gd.Gradient_descent(X_train, Z_train, Manual_REG)
-    learning_rates = np.logspace(-4, -1, 4)
-    # learning_rates = [0.0001]
+def analysis(X_train, Z_train, X_test, Z_test, reg_obj, method= "OLS", analysis= "batch_size", plot_opt = False, batch_size= None):
+    GD = gd.Gradient_descent(X_train, Z_train, reg_obj)
+    # learning_rates = np.logspace(-4, -1, 4) # 0.1 could result in overflow
+    learning_rates = np.logspace(-4, -2, 3)
     
     if batch_size == None:
-        batch_sizes = [20, 40, 80, 160]
+        if method in ["ols", "OLS", "Ols", "ridge", "Ridge", "RIDGE"]:
+            batch_sizes = [20, 40, 80, 160] # Franke
+        else:
+            batch_sizes = [13, 35, 65, 91]  # Logistic regression cancer [5, 7, 13, 35, 65, 91]
     else:
         batch_size = batch_size
     
-    epochs_num = int(2*1e5)
+    Err_pred = err.Error(Z_test)
+    if method in ["ols", "OLS", "Ols", "ridge", "Ridge", "RIDGE"]:
+        error_func = Err_pred.MSE
+    else:
+        error_func = Err_pred.Accuracy
+        
+    
     epochs_num = int(2*1e2)
+    # epochs_num = int(2*1e5)
     
     print(X_test.shape, Z_test.shape)
     
-    if method in ["ols", "OLS", "Ols"]:
-        MSE_cache = np.zeros((len(learning_rates), len(batch_sizes)))
-        stops = MSE_cache.copy()
+    if analysis in ["batch_size", "batch size", "Batch size"]:
+        print(f"Batch size analysis initiated, sizes: {batch_sizes}")
+        error_cache = np.zeros((len(learning_rates), len(batch_sizes)))
+        stops = error_cache.copy()
         for i, learning_rate in enumerate(learning_rates):
             for j, batch_size in enumerate(batch_sizes):
-                SGD_beta, MSE_train, stop = GD.Stochastic_GD(GD.start_beta, method= method, batch_size= batch_size,\
+                SGD_beta, error_train, stop = GD.Stochastic_GD(GD.start_beta, method= method, batch_size= batch_size,\
                                                         epochs= epochs_num, learning_rate= learning_rate, plotting= plot_opt)
                 # print("SGD OLS: ", SGD_beta.ravel())
                 stops[i][j] = stop # At which epoch did we stop
-                Z_pred = Manual_REG.predict(X_test, SGD_beta)
-                Err_pred = err.Error(Z_test)
-                MSE_pred = Err_pred.MSE(Z_test, Z_pred)
-                MSE_cache[i][j] = MSE_pred
+                Z_pred = reg_obj.predict(X_test, SGD_beta)
+                error_pred = error_func(Z_test, Z_pred)
+                error_cache[i][j] = error_pred
                 # print(f"eta: {learning_rate}, batch_size: {batch_size}, {MSE_pred}, {MSE_cache[i][j]}")
         
-        return stops, MSE_cache, learning_rates, batch_sizes
-    elif method in ["ridge", "Ridge", "RIDGE"]:
+        return stops, error_cache, learning_rates, batch_sizes
+    
+    elif analysis in ["hyperparameter", "hyper", "HYPER"]:
         lmbs = np.logspace(-5, -1, 5) # lambda
-        MSE_cache = np.zeros((len(learning_rates), len(lmbs)))
-        stops = MSE_cache.copy()
+        print(f"Hyperparameter analysis initiated, values: {lmbs}")
+        error_cache = np.zeros((len(learning_rates), len(lmbs)))
+        stops = error_cache.copy()
         for i, learning_rate in enumerate(learning_rates):
             for j, lmb in enumerate(lmbs):
                 GD.lmb = lmb # lambda
@@ -50,12 +62,11 @@ def analysis(X_train, Z_train, X_test, Z_test, Manual_REG, method= "OLS", plot_o
                                                         epochs= epochs_num, learning_rate= learning_rate, plotting= plot_opt)
                 # print("SGD OLS: ", SGD_beta.ravel())
                 stops[i][j] = stop # At which epoch did we stop
-                Z_pred = Manual_REG.predict(X_test, SGD_beta)
-                Err_pred = err.Error(Z_test)
-                MSE_pred = Err_pred.MSE(Z_test, Z_pred)
-                MSE_cache[i][j] = MSE_pred
+                Z_pred = reg_obj.predict(X_test, SGD_beta)
+                error_pred = error_func(Z_test, Z_pred)
+                error_cache[i][j] = error_pred
         
-        return stops, MSE_cache, learning_rates, lmbs
+        return stops, error_cache, learning_rates, lmbs
     
 def make_heat_map(matrix, x_axis, y_axis, fmt= ".2f", vmin= None, vmax= None):
     plt.figure()

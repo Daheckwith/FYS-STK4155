@@ -77,3 +77,16 @@ class Scikit_regression:
         
     def predict(self, X, beta):
         return beta.predict(X)
+    
+class Logistic_regression:
+    def __inint__(self):
+        self.lmb = 0 # l2 pa
+        
+    def Sigmoid(self, t):
+        # print("#! wow")
+        return 1/(1 + np.exp(-t))
+
+    def predict(self, inputs, weights):
+        # print("#2 wow")
+        # print("dim weights: ", weights.shape, " dim inputs: ", inputs.shape)
+        return self.Sigmoid(np.matmul(inputs, weights))

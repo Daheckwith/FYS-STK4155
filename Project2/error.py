@@ -44,4 +44,6 @@ class Error:
         # return 1 - np.sum((y_data[:-2] - y_model[:-2])**2)/np.sum((y_data[:-2] - np.mean(y_data))**2)
         
     def Accuracy(self, y_data, y_model):
-        print("wow")
+        # print("ACcuracy yay!")
+        sum_correct = np.sum(y_data == y_model)
+        return sum_correct/self.N
