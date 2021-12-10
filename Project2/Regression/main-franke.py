@@ -85,7 +85,7 @@ plt.show()
 """
 
 """
-# SGD Momentumd
+# SGD Momentum
 # OLS
 stops1, MSE_cache1, learning_rates1, batch_sizes1 =\
     analysis(X_train, Z_train, X_test, Z_test, Manual_REG, method= "OLS", analysis= "batch_size", plot_opt= True)
