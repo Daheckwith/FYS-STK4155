@@ -2,8 +2,11 @@
 *__pycache__*
 *.pyc
 
-Figures
-Deprecated
 
+Figures/stuff
+files/stuff
+Deprecated
+Diffusion/Results
+Eigenvector/Results
 gitignore_py.txt
 
