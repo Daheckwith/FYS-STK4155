@@ -3,10 +3,10 @@
 *.pyc
 
 
-Figures/stuff
-files/stuff
-Deprecated
-Diffusion/Results
-Eigenvector/Results
+Main\ Task/Figures/stuff
+Main\ Task/files/stuff
+Main\ Task/Deprecated
+Main\ Task/Diffusion/Results
+Main\ Task/Eigenvector/Results
 gitignore_py.txt
 
