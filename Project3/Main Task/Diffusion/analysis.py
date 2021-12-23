@@ -5,7 +5,6 @@ from functions import *
 plt.close("all")
 # Watch for the directories you might need to specify one
 
-"""
 # Explicit Scheme Analysis
 sub_Dir = "ES/Files/"
 Dir = sub_Dir
@@ -68,51 +67,4 @@ plt.plot(NHN, avg_MSE_NHN, "o--")
 plt.xlabel("Number of Hidden Nodes "); plt.ylabel("Average Mean Squared Error")
 save_fig(f"../Figures/Avg_MSE_NHL_{NHL}.png")
 plt.show()
-"""
 
-
-
-# Neural Network analysis
-# NHL1
-NHL = 1
-NHN_ = []
-NHN = [60]
-
-# #NHL2
-NHL = 2
-NHN_ = [60]
-NHN = [60]
-
-#NHL3
-NHL = 3
-NHN_ = [60, 60]
-NHN = [60]
-
-avg_MSE_NHN = []
-
-filename= f"NN_Nx_10_Nt_20_NHL_{NHL}_{sum(NHN_) + NHN[0]}.txt"
-
-print("\n-----------------------------------------------------------")
-print(f"{filename}")
-u, time_step, parameters = read_file(filename= filename, number_of_lines= 20)
-print(f"time_step: {time_step} \n")
-
-# # # Plot
-
-avg_mse= plot_2D(u, time_step, parameters, NHL= NHL, NHN= NHN[0])
-plt.title("FFNN")
-avg_MSE_NHN.append(avg_mse)
-
-
-# plot_lines(u, time_step, parameters, NHL= NHL, NHN= NHN[0], number_of_lines= 10)
-sub_plots(u, time_step, parameters, NHL= NHL, NHN= NHN[0], number_of_lines= 4)
-# N = u.shape[0]
-# plot_line(u, time_step, parameters, idx= round(N/2), NHL= NHL, NHN= NHN[0])
-# plot_line(u, time_step, parameters, idx= round(-1), NHL= NHL, NHN= NHN[0])
-
-plt.figure()
-plt.title(f"Average MSE NHL= {NHL}")
-plt.plot(NHN, avg_MSE_NHN, "o--")
-plt.xlabel("Number of Hidden Nodes "); plt.ylabel("Average Mean Squared Error")
-save_fig(f"../Figures/Avg_MSE_NHL_{NHL}.png")
-plt.show()
