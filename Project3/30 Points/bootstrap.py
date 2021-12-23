@@ -26,14 +26,6 @@ class Bootstrap:
         t_tilde = np.zeros([t_train.shape[0], self.nr_of_boots])
         t_pred = np.zeros([t_test.shape[0], self.nr_of_boots])
 
-        """
-        if len(t_train.shape) > 1:
-            t_train = t_train.ravel()
-
-        if len(t_test.shape) > 1:
-            t_test = t_test.ravel()
-        """
-
         for boot in range(self.nr_of_boots):
             X_bt, t_bt = resample(X_train, t_train)
 
