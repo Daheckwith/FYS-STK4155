@@ -205,19 +205,6 @@ if __name__ == '__main__':
     
 
     P = solve_pde_deep_neural_network(x,t, num_hidden_neurons, num_iter, lmb)
-
-    ## Store the results
-    # g_dnn_ag = np.zeros((Nx+1, Nt+1))
-    # G_analytical = np.zeros((Nx+1, Nt+1))
-    # for i,x_ in enumerate(x):
-    #     for j, t_ in enumerate(t):
-    #         point = np.array([x_, t_])
-    #         g_dnn_ag[i,j] = g_trial(point,P)
-
-    #         G_analytical[i,j] = g_analytic(point)
-    
-    #     np.savetxt(f, g_dnn_ag[i], newline= " ", fmt= "%.8e")
-    #     f.write('\n')
     
     ## Store the results
     g_dnn_ag = np.zeros((Nt+1, Nx+1))
